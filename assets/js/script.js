@@ -1,5 +1,9 @@
 let formEl = document.getElementById("task-form");
+
 let tasksToDoEl = document.querySelector("#tasks-to-do");
+let tasksInProgressEl = document.querySelector("#tasks-in-progress");
+let tasksCompletedEl = document.querySelector("#tasks-completed");
+
 let taskIDCounter = 0;
 let pageContentEl = document.getElementById("page-content");
 
@@ -16,12 +20,20 @@ let taskFormHandler = function(event) {
 
     formEl.reset();
 
-    let taskDataObj = {
-        name: taskNameInput,
-        type: taskTypeInput,        
-    }
+    let isEdit = formEl.hasAttribute("data-task-id");
 
-    createTaskEl(taskDataObj);
+    if (isEdit) {
+        let taskID = formEl.getAttribute("data-task-id");
+        completeEditTask(taskNameInput, taskTypeInput, taskID);
+    }
+    else {
+        let taskDataObj = {
+            name: taskNameInput,
+            type: taskTypeInput,        
+        };
+        
+        createTaskEl(taskDataObj);
+    };   
 };
 
 let createTaskEl = function(taskDataObj) {
@@ -84,9 +96,17 @@ let createTaskActions = function(taskID) {
 
 formEl.addEventListener("submit", taskFormHandler);
 
-let taskbuttonHandler = function(event) {
-    if(event.target.matches(".delete-btn")) {
-        let taskID = event.target.getAttribute("data-task-id");
+let taskButtonHandler = function(event) {
+    let targetEl = event.target;
+    
+    if(targetEl.matches(".edit-btn")) {
+        let taskID = targetEl.getAttribute("data-task-id");
+        console.log("Stop touching me!\nTask ID: " + taskID);
+        editTask(taskID);
+    };
+    
+    if(targetEl.matches(".delete-btn")) {
+        let taskID = targetEl.getAttribute("data-task-id");
         console.log("Ouch! Don't delete me!\nTask ID: " + taskID);
         deleteTask(taskID);
     };
@@ -97,4 +117,67 @@ let deleteTask = function(taskID) {
     taskSelected.remove();
 }
 
-pageContentEl.addEventListener("click", taskbuttonHandler);
+let editTask = function(taskID) {
+    console.log("editing task #" + taskID);
+
+    let taskSelected = document.querySelector(".task-item[data-task-id='" + taskID + "']");
+
+    let taskName = taskSelected.querySelector("h3.task-name").textContent;
+
+    let taskType = taskSelected.querySelector("span.task-type").textContent;
+
+    document.querySelector("input[name='task-name']").value = taskName;
+    document.querySelector("select[name='task-type']").value = taskType;
+
+    document.querySelector("#save-task").textContent = "Save Task";
+
+    formEl.setAttribute("data-task-id", taskID);
+
+}
+
+let completeEditTask = function(taskName, taskType, taskID) {
+    let taskSelected = document.querySelector(".task-item[data-task-id='" + taskID + "']");
+
+    taskSelected.querySelector("h3.task-name").textContent = taskName;
+    taskSelected.querySelector("span.task-type").textContent = taskType;
+
+    alert("Task Updated!");
+
+    formEl.removeAttribute("data-task-id");
+    document.getElementById("save-task").textContent = "Add Task";
+}
+
+let taskStatusChangeHandler = function(event) {
+    let taskID = event.target.getAttribute("data-task-id");
+
+    let statusValue = event.target.value.toLowerCase();
+
+    let taskSelected = document.querySelector(".task-item[data-task-id='" + taskID + "']");
+
+    console.log(statusValue);
+
+    /*if (statusValue === "to do") {
+        tasksToDoEl.appendChild(taskSelected);
+    } 
+    else if (statusValue === "in progress") {
+        tasksInProgressEl.appendChild(taskSelected);
+    } 
+    else if (statusValue === "completed") {
+        tasksCompletedEl.appendChild(taskSelected);
+    }; 
+    */
+    switch (statusValue) {
+        case "to do":
+            tasksToDoEl.appendChild(taskSelected);
+            break;
+        case "in progress":
+            tasksInProgressEl.appendChild(taskSelected);
+            break;
+        case "completed":
+            tasksCompletedEl.appendChild(taskSelected);
+            break;
+    };
+}
+
+pageContentEl.addEventListener("click", taskButtonHandler);
+pageContentEl.addEventListener("change", taskStatusChangeHandler);
