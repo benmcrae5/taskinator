@@ -41,6 +41,7 @@ let createTaskEl = function(taskDataObj) {
     taskItemEl.className = "task-item";
 
     taskItemEl.setAttribute("data-task-id", taskIDCounter);
+    taskItemEl.setAttribute("draggable", "true");
 
     let taskInfoEl = document.createElement("div");
     taskInfoEl.className = "task-info";
@@ -179,5 +180,51 @@ let taskStatusChangeHandler = function(event) {
     };
 }
 
+let dragTaskHandler = function(event) {
+    let taskID = event.target.getAttribute("data-task-id");
+    event.dataTransfer.setData("text/plain", taskID);
+}
+
+let dropZoneDragHandler = function(event) {
+    let taskListEl = event.target.closest(".task-list");
+    if (taskListEl) {
+        event.preventDefault();
+        taskListEl.setAttribute("style", "background: rgba(68, 233, 255, 0.7); border-style: dashed;");
+    };
+
+}
+
+let dropTaskHandler = function(event) {
+    let id = event.dataTransfer.getData("text/plain");
+    let draggableElement = document.querySelector("[data-task-id='" + id + "']");
+    let dropZoneEl = event.target.closest(".task-list");
+    let statusType = dropZoneEl.id;
+    let statusSelectEl = draggableElement.querySelector("select[name='status-change']");
+    
+    if (statusType === "tasks-to-do") {
+        statusSelectEl.selectedIndex = 0;
+    }
+    else if (statusType === "tasks-in-progress") {
+        statusSelectEl.selectedIndex = 1;
+    }
+    else if (statusType === "tasks-completed") {
+        statusSelectEl.selectedIndex = 2;
+    }
+
+    dropZoneEl.appendChild(draggableElement);
+    dropZoneEl.removeAttribute("style");
+}
+
+let dragLeaveHandler = function (event) {
+    var taskListEl = event.target.closest(".task-list");
+    if (taskListEl) {
+        taskListEl.removeAttribute("style");
+    }
+}
+
 pageContentEl.addEventListener("click", taskButtonHandler);
 pageContentEl.addEventListener("change", taskStatusChangeHandler);
+pageContentEl.addEventListener("dragstart", dragTaskHandler);
+pageContentEl.addEventListener("dragover", dropZoneDragHandler);
+pageContentEl.addEventListener("drop", dropTaskHandler);
+pageContentEl.addEventListener("dragleave", dragLeaveHandler);
